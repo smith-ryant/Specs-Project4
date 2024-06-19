@@ -14,16 +14,17 @@ const {
   deletePost,
 } = require("./controllers/posts");
 const { register, login } = require("./controllers/auth");
+const isAuthenticated = require("./middleware/isAuthenticated");
 
 app.post("/register", register);
 app.post("/login", login);
-app.post("/posts", addPost);
+app.post("/posts", isAuthenticated, addPost);
 
 app.get("/posts", getAllPosts);
 app.get("/userposts/:userId", getCurrentUserPosts);
 
-app.put("/posts/:id", editPost);
+app.put("/posts/:id", isAuthenticated, editPost);
 
-app.delete("/posts/:id", deletePost);
+app.delete("/posts/:id", isAuthenticated, deletePost);
 
 app.listen(PORT, () => console.log("Server is running on Port ${PORT}"));
