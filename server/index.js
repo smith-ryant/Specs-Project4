@@ -39,4 +39,4 @@ sequelize
       console.log(`db sync successful & server running on port ${PORT}`)
     );
   })
-  .catch((err) => console.log(err));
+  .catch((err) => console.log("Database Error: ", err));

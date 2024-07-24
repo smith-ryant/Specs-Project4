@@ -1,22 +1,18 @@
-import { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import axios from "axios";
-
 import AuthContext from "../store/authContext";
 
 const Home = () => {
-  const {
-    state: { userId, token },
-  } = useContext(AuthContext);
-
+  const { state } = useContext(AuthContext);
   const [posts, setPosts] = useState([]);
 
   useEffect(() => {
     axios
       .get("/posts")
       .then((res) => {
-        if (userId) {
+        if (state.userId) {
           const otherUsersPosts = res.data.filter(
-            (post) => +userId !== post.userId
+            (post) => state.userId !== post.userId
           );
           setPosts(otherUsersPosts);
         } else {
@@ -26,7 +22,7 @@ const Home = () => {
       .catch((err) => {
         console.log(err);
       });
-  }, [userId]);
+  }, [state.userId]);
 
   const mappedPosts = posts.map((post) => {
     return (
@@ -38,11 +34,13 @@ const Home = () => {
     );
   });
 
-  return mappedPosts.length >= 1 ? (
-    <main>{mappedPosts}</main>
-  ) : (
+  return (
     <main>
-      <h1>There are no posts yet!</h1>
+      {mappedPosts.length >= 1 ? (
+        { mappedPosts }
+      ) : (
+        <h1>There are no posts yet!</h1>
+      )}
     </main>
   );
 };
