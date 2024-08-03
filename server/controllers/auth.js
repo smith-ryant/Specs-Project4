@@ -1,81 +1,73 @@
-const jwt = require("jsonwebtoken");
-const { User } = require("../models/user");
+// ../server/controllers/auth.js
+
+const { User } = require("../models");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 require("dotenv").config();
+
 const SECRET = process.env.SECRET;
 
-let createToken = (username, id) => {
+const createToken = (username, id) => {
   return jwt.sign({ username, id }, SECRET, { expiresIn: "2 days" });
 };
 
+const sendResponse = (res, user, token) => {
+  const exp = Date.now() + 1000 * 60 * 60 * 48;
+  const data = {
+    username: user.username,
+    userId: user.id,
+    token: token,
+    exp: exp,
+  };
+  res.status(200).send(data);
+};
+
 module.exports = {
-  login: async (req, res) => {
-    try {
-      let { username, password } = req.body;
-      let foundUser = await User.findOne({ where: { username: username } });
-      if (foundUser) {
-        const isAuthenticated = bcrypt.compareSync(
-          password,
-          foundUser.hashedPass
-        );
-        if (isAuthenticated) {
-          let token = createToken(
-            foundUser.dataValues.username,
-            foundUser.dataValues.id
-          );
-          const exp = Date.now() + 1000 * 60 * 60 * 48;
-          console.log(foundUser);
-          const data = {
-            username: foundUser.dataValues.username,
-            userId: foundUser.dataValues.id,
-            token: token,
-            exp: exp,
-          };
-          res.status(200).send(data);
-        } else {
-          res.status(400).send("Password is incorrect");
-        }
-      } else {
-        res.status(400).send("User does not exist.");
-      }
-    } catch (error) {
-      console.error(error);
-      res.status(400).send(error);
-    }
-  },
   register: async (req, res) => {
     try {
-      let { username, password } = req.body;
-      let foundUser = await User.findOne({ where: { username: username } });
-      console.log(foundUser);
+      console.log("User Model:", User); // Debugging
+      const { username, password } = req.body;
+      const foundUser = await User.findOne({ where: { username } });
       if (foundUser) {
-        res.status(400).send("Username is Taken!");
-      } else {
-        const salt = bcrypt.genSaltSync(10);
-        const hash = bcrypt.hashSync(password, salt);
-
-        let newUser = await User.create({
-          username: username,
-          hashedPass: hash,
-        });
-        console.log(newUser);
-        let token = createToken(
-          newUser.dataValues.username,
-          newUser.dataValues.id
-        );
-        const exp = Date.now() + 1000 * 60 * 60 * 48;
-
-        const data = {
-          username: newUser.dataValues.username,
-          userId: newUser.dataValues.id,
-          token: token,
-          exp: exp,
-        };
-        res.status(200).send(data);
+        return res.status(409).send("Username is taken!");
       }
+
+      const salt = bcrypt.genSaltSync(10);
+      const hash = bcrypt.hashSync(password, salt);
+
+      const newUser = await User.create({
+        username,
+        hashedPass: hash,
+      });
+
+      const token = createToken(newUser.username, newUser.id);
+      sendResponse(res, newUser, token);
     } catch (error) {
-      console.error(error);
-      res.status(400).send(error);
+      console.error("ERROR IN register:", error);
+      res.status(500).send("Internal Server Error");
+    }
+  },
+  login: async (req, res) => {
+    try {
+      const { username, password } = req.body;
+      const foundUser = await User.findOne({ where: { username } });
+      if (!foundUser) {
+        return res.status(404).send("User does not exist.");
+      }
+
+      const isAuthenticated = bcrypt.compareSync(
+        password,
+        foundUser.hashedPass
+      );
+      if (!isAuthenticated) {
+        return res.status(401).send("Password is incorrect");
+      }
+
+      const token = createToken(foundUser.username, foundUser.id);
+      sendResponse(res, foundUser, token);
+    } catch (error) {
+      console.error("ERROR IN login:", error);
+      res.status(500).send("Internal Server Error");
     }
   },
 };

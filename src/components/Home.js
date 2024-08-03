@@ -36,11 +36,7 @@ const Home = () => {
 
   return (
     <main>
-      {mappedPosts.length >= 1 ? (
-        { mappedPosts }
-      ) : (
-        <h1>There are no posts yet!</h1>
-      )}
+      {mappedPosts.length >= 1 ? mappedPosts : <h1>There are no posts yet!</h1>}
     </main>
   );
 };

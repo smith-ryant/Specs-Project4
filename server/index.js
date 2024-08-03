@@ -1,10 +1,11 @@
+// ../server/index.js
+
 const express = require("express");
 const cors = require("cors");
 const app = express();
 const PORT = process.env.PORT || 4005;
 const { sequelize } = require("./util/database");
-const { User } = require("./models/user");
-const { Post } = require("./models/post");
+const { User, Post } = require("./models"); // Correct import from models/index.js
 
 const {
   getAllPosts,
@@ -19,14 +20,10 @@ const { isAuthenticated } = require("./middleware/isAuthenticated");
 app.use(express.json());
 app.use(cors());
 
-User.hasMany(Post);
-Post.belongsTo(User);
-
 app.post("/register", register);
 app.post("/login", login);
 
 app.get("/posts", getAllPosts);
-
 app.get("/userposts/:userId", getCurrentUserPosts);
 app.post("/posts", isAuthenticated, addPost);
 app.put("/posts/:id", isAuthenticated, editPost);
