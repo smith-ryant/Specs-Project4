@@ -1,6 +1,9 @@
-const { supabase } = require("../util/database");
+// ../server/controllers/auth.js
+
+const { User } = require("../models");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+require("dotenv").config();
 
 const SECRET = process.env.SECRET;
 
@@ -20,47 +23,23 @@ const sendResponse = (res, user, token) => {
 };
 
 module.exports = {
-  // Ensure these functions are correctly exported
   register: async (req, res) => {
     try {
+      console.log("User Model:", User); // Debugging
       const { username, password } = req.body;
-      console.log("Register Request:", req.body); // Log the incoming request data
-
-      // Check if the user already exists
-      const { data: foundUser, error: findError } = await supabase
-        .from("users")
-        .select("*")
-        .eq("username", username)
-        .single();
-
-      console.log("Found User in Register:", foundUser); // Log the found user data
-
-      if (findError && findError.code !== "PGRST116") {
-        console.error("Error finding user:", findError.message);
-        return res.status(500).send("Internal Server Error");
-      }
-
+      const foundUser = await User.findOne({ where: { username } });
       if (foundUser) {
         return res.status(409).send("Username is taken!");
       }
 
-      // Hash the password
       const salt = bcrypt.genSaltSync(10);
       const hash = bcrypt.hashSync(password, salt);
 
-      // Insert new user
-      const { data: newUser, error: createError } = await supabase
-        .from("users")
-        .insert([{ username, hashedPass: hash }])
-        .select("*")
-        .single();
+      const newUser = await User.create({
+        username,
+        hashedPass: hash,
+      });
 
-      if (createError) {
-        console.error("Error creating user:", createError.message);
-        return res.status(500).send("Internal Server Error");
-      }
-
-      // Create a JWT token
       const token = createToken(newUser.username, newUser.id);
       sendResponse(res, newUser, token);
     } catch (error) {
@@ -68,22 +47,11 @@ module.exports = {
       res.status(500).send("Internal Server Error");
     }
   },
-
   login: async (req, res) => {
     try {
       const { username, password } = req.body;
-      console.log("controllers/auth.js - Login Request:", req.body); // Log the incoming request data
-
-      const { data: foundUser, error: findError } = await supabase
-        .from("users")
-        .select("*")
-        .eq("username", username)
-        .single();
-
-      console.log("(controllers/auth.js) Found User in Login:", foundUser); // Log the found user data
-
-      if (findError) {
-        console.error("Error finding user:", findError.message);
+      const foundUser = await User.findOne({ where: { username } });
+      if (!foundUser) {
         return res.status(404).send("User does not exist.");
       }
 

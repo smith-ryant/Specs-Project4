@@ -1,13 +1,11 @@
-// ../server/models/index.js
+const { createUser, findUserByUsername } = require("./user");
+const { createPost, findAllPosts, updatePost, deletePost } = require("./post");
 
-const User = require("./user");
-const Post = require("./post");
-
-console.log("User Model: ", User);
-console.log("Post Model: ", Post);
-
-// Define associations
-User.hasMany(Post); // A user can have many posts
-Post.belongsTo(User); // A post belongs to a user
-
-module.exports = { User, Post }; // Correct export
+module.exports = {
+  createUser,
+  findUserByUsername,
+  createPost,
+  findAllPosts,
+  updatePost,
+  deletePost,
+};

@@ -1,12 +1,11 @@
-// ../server/index.js
-
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const app = express();
 const PORT = process.env.PORT || 4005;
-const { sequelize } = require("./util/database");
-const { User, Post } = require("./models"); // Correct import from models/index.js
+const { supabase } = require("./util/database"); // Use Supabase client
 
+// Import controller functions
 const {
   getAllPosts,
   getCurrentUserPosts,
@@ -20,20 +19,17 @@ const { isAuthenticated } = require("./middleware/isAuthenticated");
 app.use(express.json());
 app.use(cors());
 
+// API Endpoints
 app.post("/register", register);
 app.post("/login", login);
 
-app.get("/posts", getAllPosts);
-app.get("/userposts/:userId", getCurrentUserPosts);
-app.post("/posts", isAuthenticated, addPost);
-app.put("/posts/:id", isAuthenticated, editPost);
-app.delete("/posts/:id", isAuthenticated, deletePost);
+app.get("/posts", getAllPosts); // Ensure this function is imported and defined
+app.get("/userposts/:userId", getCurrentUserPosts); // Ensure this function is imported and defined
+app.post("/posts", isAuthenticated, addPost); // Ensure this function is imported and defined
+app.put("/posts/:id", isAuthenticated, editPost); // Ensure this function is imported and defined
+app.delete("/posts/:id", isAuthenticated, deletePost); // Ensure this function is imported and defined
 
-sequelize
-  .sync()
-  .then(() => {
-    app.listen(PORT, () =>
-      console.log(`db sync successful & server running on port ${PORT}`)
-    );
-  })
-  .catch((err) => console.log("Database Error: ", err));
+// Start Server
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});

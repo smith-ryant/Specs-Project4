@@ -1,30 +1,36 @@
-// ../server/models/user.js
-// verified code
+const { supabase } = require("../util/database"); // Supabase client
 
-const { DataTypes } = require("sequelize");
-const sequelize = require("../util/database").sequelize; // Use sequelize instance
+// Function to create a user
+async function createUser(username, hashedPass) {
+  const { data, error } = await supabase
+    .from("users")
+    .insert([{ username, hashedPass }]);
 
-const User = sequelize.define(
-  "user",
-  {
-    id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
-      allowNull: false,
-      primaryKey: true,
-    },
-    username: {
-      type: DataTypes.STRING(50),
-      allowNull: false,
-    },
-    hashedPass: {
-      type: DataTypes.STRING(255),
-      allowNull: false,
-    },
-  },
-  {
-    timestamps: true, // false - Disable timestamps if not needed, true - Enable timestamps
+  if (error) {
+    console.error("Error creating user:", error.message);
+    throw new Error("Failed to create user");
   }
-);
 
-module.exports = User; // Correct export
+  return data[0]; // Return the created user data
+}
+
+// Function to find a user by username
+async function findUserByUsername(username) {
+  const { data, error } = await supabase
+    .from("users")
+    .select("*")
+    .eq("username", username)
+    .single();
+
+  if (error) {
+    console.error("Error finding user by username:", error.message);
+    throw new Error("User not found");
+  }
+
+  return data; // Return the found user data
+}
+
+module.exports = {
+  createUser,
+  findUserByUsername,
+};
